@@ -1,9 +1,7 @@
-# ==============================================================================
-# FASE 2: ANALISI ESPLORATIVA DEI DATI (EDA COMPLETA SU TUTTE LE COLONNE)
-# ==============================================================================
-cat("\n=========================================================\n")
+
+# FASE 2: ANALISI ESPLORATIVA DEI DATI
+
 cat("--- STEP 2: EDA COMPLETA E TEST INFERENZIALI ---\n")
-cat("=========================================================\n\n")
 
 # Funzione ausiliaria per il calcolo della Moda
 calcola_moda <- function(x) {
@@ -11,10 +9,7 @@ calcola_moda <- function(x) {
   uniqv[which.max(tabulate(match(x, uniqv)))]
 }
 
-# ------------------------------------------------------------------------------
-# 2.1 EDA GLOBALE E UNIVARIATA: COLONNE QUANTITATIVE (NUMERICHE)
-# ------------------------------------------------------------------------------
-cat("--- 2.1 EDA COMPLETA: PANORAMICA GENERALE E VARIABILI NUMERICHE ---\n\n")
+cat("--- PANORAMICA GENERALE E VARIABILI NUMERICHE ---\n\n")
 
 # 1. Summary Generale di TUTTE le colonne presenti nel dataset reale
 cat("[SUMMARY COMPLETO DI TUTTE LE COLONNE DEL DATASET]:\n")
@@ -64,10 +59,9 @@ print(ggplot(df_real, aes(y = `Anomaly Scores`)) +
         theme_minimal())
 
 
-# ------------------------------------------------------------------------------
-# 2.2 EDA UNIVARIATA: COLONNE QUALITATIVE / CATEGORIALI
-# ------------------------------------------------------------------------------
-cat("--- 2.2 EDA COMPLETA: VARIABILI CATEGORIALI ---\n\n")
+# 2.2 ANALISI UNIVARIATA: COLONNE QUALITATIVE / CATEGORIALI
+
+cat("--- 2.2 ANALISI COMPLETA: VARIABILI CATEGORIALI ---\n\n")
 
 # Tabella Frequenze Assolute e Relative per 'Protocol'
 cat("[FREQUENZE PROTOCOLLO]:\n")
@@ -102,9 +96,8 @@ print(ggplot(df_real, aes(x = `Action Taken`, fill = `Action Taken`)) +
         scale_fill_brewer(palette = "Pastel1"))
 
 
-# ------------------------------------------------------------------------------
 # 2.3 STATISTICA DESCRITTIVA BIVARIATA
-# ------------------------------------------------------------------------------
+
 cat("--- 2.3 STATISTICA DESCRITTIVA BIVARIATA ---\n")
 v_cov <- cov(df_real$`Packet Length`, df_real$`Anomaly Scores`, use = "complete.obs")
 v_cor <- cor(df_real$`Packet Length`, df_real$`Anomaly Scores`, use = "complete.obs")
@@ -119,9 +112,9 @@ print(ggplot(df_real, aes(x = `Packet Length`, y = `Anomaly Scores`)) +
         theme_minimal())
 
 
-# ------------------------------------------------------------------------------
+
 # 2.4 TEST INFERENZIALE DI INDIPENDENZA (CHI-QUADRATO)
-# ------------------------------------------------------------------------------
+
 cat("\n--- 2.4 TEST CHI-QUADRATO DI INDIPENDENZA ---\n")
 tab_contingenza <- table(df_real$Protocol, df_real$`Action Taken`)
 cat("Tabella di Contingenza (Protocollo vs Azione):\n")
@@ -131,9 +124,8 @@ test_chi2_ind <- chisq.test(tab_contingenza)
 print(test_chi2_ind)
 
 
-# ------------------------------------------------------------------------------
 # 2.5 CONFRONTO STATISTICO E VALIDAZIONE DATASET SINTETICO (LLM)
-# ------------------------------------------------------------------------------
+
 cat("\n--- 2.5 CONFRONTO STATISTICO REALE VS SINTETICO ---\n")
 cat("\n[DATI REALI - ANOMALY SCORES]:\n"); print(summary(df_real$`Anomaly Scores`))
 cat("\n[DATI SINTETICI - ANOMALY SCORES]:\n"); print(summary(df_synth$`Anomaly Scores`))
@@ -151,9 +143,8 @@ print(ggplot(df_confronto, aes(x = Tipo, y = Score, fill = Tipo)) +
         scale_fill_manual(values = c("steelblue", "coral")))
 
 
-# ------------------------------------------------------------------------------
 # 2.6 TEST CHI-QUADRATO DI BUON ADATTAMENTO (GOODNESS OF FIT)
-# ------------------------------------------------------------------------------
+
 cat("\n--- 2.6 TEST CHI-QUADRATO DI BUON ADATTAMENTO ---\n")
 
 # Discretizzazione basata sui quantili empirici del dataset reale per garantire frequenze attese > 5
