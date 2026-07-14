@@ -1,80 +1,63 @@
+# Analisi Descrittiva ed Inferenziale
 cat("--- Step 2: STATISTICHE DESCRITTIVE E DISTRIBUZIONI ---\n")
 
-# Statistiche descrittive generali
-print(summary(df_real[, .(sentbyte, rcvdbyte)]))
+print(summary(df_real[, .(`Packet Length`, `Anomaly Scores`)]))
 
-# --- INDICI DI POSIZIONE COMPLETI (MODA) ---
+# Indici di Posizione Completi (Moda)
 calcola_moda <- function(x) {
   uniqv <- unique(na.omit(x))
   uniqv[which.max(tabulate(match(x, uniqv)))]
 }
-cat("Moda di Sent Bytes (Byte Inviati):", calcola_moda(df_real$sentbyte), "\n")
-cat("Moda di Rcvd Bytes (Byte Ricevuti):", calcola_moda(df_real$rcvdbyte), "\n\n")
+cat("Moda di Packet Length:", calcola_moda(df_real$`Packet Length`), "\n")
+cat("Moda di Anomaly Scores:", calcola_moda(df_real$`Anomaly Scores`), "\n\n")
 
-# --- STATISTICA DESCRITTIVA BIVARIATA ---
+# Statistica Descrittiva Bivariata
 cat("--- FASE 2.1: COVARIANZA E CORRELAZIONE CAMPIONARIA ---\n")
-v_cov <- cov(df_real$sentbyte, df_real$rcvdbyte, use = "complete.obs")
-v_cor <- cor(df_real$sentbyte, df_real$rcvdbyte, use = "complete.obs")
+v_cov <- cov(df_real$`Packet Length`, df_real$`Anomaly Scores`, use = "complete.obs")
+v_cor <- cor(df_real$`Packet Length`, df_real$`Anomaly Scores`, use = "complete.obs")
 cat("Covarianza Campionaria:", v_cov, "\n")
 cat("Coefficiente di Correlazione Campionario (r_xy):", v_cor, "\n\n")
 
-# Grafico 1: Istogramma per sentbyte (Distribuzione dei volumi in uscita)
-print(ggplot(df_real, aes(x = sentbyte)) +
+# Visualizzazioni Univariate e Bivariate
+print(ggplot(df_real, aes(x = `Packet Length`)) +
         geom_histogram(bins = 50, fill = "steelblue", color = "white", alpha = 0.7) +
-        labs(title = "Distribuzione Empirica dei Byte Inviati (sentbyte)",
-             x = "Sent Bytes (Bytes)", y = "Frequenza") + 
-        theme_minimal())
+        labs(title = "Distribuzione Multimodale di Packet Length (Dati Reali)",
+             x = "Packet Length (Bytes)", y = "Frequenza") + theme_minimal())
 
-# Grafico 2: Boxplot per rcvdbyte (Distribuzione dei volumi in ingresso)
-print(ggplot(df_real, aes(y = rcvdbyte)) +
+print(ggplot(df_real, aes(y = `Anomaly Scores`)) +
         geom_boxplot(fill = "coral", alpha = 0.7) +
-        labs(title = "Boxplot di Rcvd Bytes (Dati Reali)", y = "Received Bytes") + 
-        theme_minimal())
+        labs(title = "Boxplot di Anomaly Scores (Dati Reali)", y = "Punteggio") + theme_minimal())
 
-# Grafico 3: Scatterplot Bivariato tra Volumi in Entrata ed Uscita
-print(ggplot(df_real, aes(x = sentbyte, y = rcvdbyte)) +
+print(ggplot(df_real, aes(x = `Packet Length`, y = `Anomaly Scores`)) +
         geom_point(alpha = 0.4, color = "darkgray") +
-        labs(title = "Scatterplot: Relazione bivariata tra Sent Bytes e Rcvd Bytes",
-             x = "Sent Bytes (Bytes)", y = "Received Bytes (Bytes)") + 
-        theme_minimal())
+        labs(title = "Scatterplot: Relazione tra Packet Length e Anomaly Scores",
+             x = "Packet Length (Bytes)", y = "Anomaly Scores") + theme_minimal())
 
-# --- TEST INFERENZIALI: CHI-QUADRATO DI INDIPENDENZA ---
-cat("\n--- TEST CHI-QUADRATO (INDIPENDENZA TRA PROTOCOLLO E AZIONE) ---\n")
-tab_contingenza <- table(df_real$proto, df_real$action)
-test_chi2_ind <- chisq.test(tab_contingenza, simulate.p.value = TRUE, B = 2000)
-print(test_chi2_ind)
+# Test Inferenziali
+cat("\n--- TEST CHI-QUADRATO (INDIPENDENZA) ---\n")
+tab_contingenza <- table(df_real$Protocol, df_real$`Action Taken`)
+print(chisq.test(tab_contingenza))
 
-# --- CONFRONTO DESCRITTIVO REALE VS SINTETICO ---
-cat("\n--- CONFRONTO STATISTICO REALE VS SINTETICO: RECEIVED BYTES ---\n")
-cat("\n[DATI REALI - RCVD BYTES]:\n"); print(summary(df_real$rcvdbyte))
-cat("\n[DATI SINTETICI - RCVD BYTES]:\n"); print(summary(df_synth$rcvdbyte))
+# Confronto Descrittivo Reale vs Sintetico
+cat("\n--- CONFRONTO STATISTICO REALE VS SINTETICO ---\n")
+cat("\n[DATI REALI - ANOMALY SCORES]:\n"); print(summary(df_real$`Anomaly Scores`))
+cat("\n[DATI SINTETICI - ANOMALY SCORES]:\n"); print(summary(df_synth$`Anomaly Scores`))
 
-# Grafico 7: Boxplot di Confronto Reale vs Sintetico
-df_real_subset  <- data.table(Byte = df_real$rcvdbyte, Tipo = "Reale")
-df_synth_subset <- data.table(Byte = df_synth$rcvdbyte, Tipo = "Sintetico")
-df_confronto    <- rbind(df_real_subset, df_synth_subset)
+# Boxplot di Confronto
+df_real_subset <- data.table(Score = df_real$`Anomaly Scores`, Tipo = "Reale")
+df_synth_subset <- data.table(Score = df_synth$`Anomaly Scores`, Tipo = "Sintetico")
+df_confronto <- rbind(df_real_subset, df_synth_subset)
 
-print(ggplot(df_confronto, aes(x = Tipo, y = Byte, fill = Tipo)) +
+print(ggplot(df_confronto, aes(x = Tipo, y = Score, fill = Tipo)) +
         geom_boxplot(alpha = 0.7) +
-        labs(title = "Confronto delle Distribuzioni dei Received Bytes", 
-             x = "Tipologia di Dataset", y = "Received Bytes") +
-        theme_minimal() + 
-        scale_fill_manual(values = c("steelblue", "coral")))
+        labs(title = "Confronto delle Distribuzioni degli Anomaly Scores", x = "Tipologia", y = "Punteggio") +
+        theme_minimal() + scale_fill_manual(values = c("steelblue", "coral")))
 
-# --- TEST CHI-QUADRATO DI BUON ADATTAMENTO (GOODNESS OF FIT) ---
+# Test Chi-Quadrato di Buon Adattamento
 cat("\n--- TEST CHI-QUADRATO DI BUON ADATTAMENTO ---\n")
-
-# Utilizziamo i quantili dei dati reali per definire 5 classi di intervallo.
-# Questo garantisce l'assenza di frequenze attese inferiori a 5, preservando il rigore formale del test.
-classi_intervallo <- unique(quantile(df_real$rcvdbyte, probs = seq(0, 1, length.out = 6), na.rm = TRUE))
-
-# Eseguiamo la discretizzazione basata sulle classi empiriche reali
-frequenze_reali      <- table(cut(df_real$rcvdbyte, breaks = classi_intervallo, include.lowest = TRUE))
-frequenze_sintetiche <- table(cut(df_synth$rcvdbyte, breaks = classi_intervallo, include.lowest = TRUE))
-
-# Calcolo del vettore delle probabilità attese basato sulla popolazione reale
+classi_intervallo <- seq(0, 100, length.out = 6)
+frequenze_reali <- table(cut(df_real$`Anomaly Scores`, breaks = classi_intervallo, include.lowest = TRUE))
+frequenze_sintetiche <- table(cut(df_synth$`Anomaly Scores`, breaks = classi_intervallo, include.lowest = TRUE))
 probabilita_attese <- as.vector(frequenze_reali) / sum(frequenze_reali)
 
-# Esecuzione e stampa del test di buon adattamento sulle frequenze del dataset sintetico
-test_buon_adattamento <- chisq.test(as.vector(frequenze_sintetiche), p = probabilita_attese)
-print(test_buon_adattamento)
+print(chisq.test(as.vector(frequenze_sintetiche), p = probabilita_attese))
